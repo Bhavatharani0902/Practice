@@ -160,6 +160,7 @@ namespace Practice.Controllers
                 return StatusCode(200, bookDTOs);
             }
             catch (Exception ex)
+
             {
                 _logger?.Error($"Error in SearchBooksByGenre: {ex.Message}");
                 return StatusCode(500, ex.Message);

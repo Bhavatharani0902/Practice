@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Practice.DTOs; 
-using Practice.Entities; 
+using Practice.DTOs;
+using Practice.Entities;
 using Practice.Service;
 using log4net;
 using System;
@@ -12,7 +12,7 @@ namespace Practice.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public class BooksController : ControllerBase
     {
         private readonly IBookService _bookService;
@@ -67,7 +67,6 @@ namespace Practice.Controllers
             }
         }
 
-
         [HttpPost]
         public ActionResult CreateBook([FromBody] BookDto bookDto)
         {
@@ -82,6 +81,37 @@ namespace Practice.Controllers
             {
                 _logger?.Error($"Error in CreateBook: {ex.Message}");
                 return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult UpdateBook(int id, [FromBody] Book updatedBook)
+        {
+            try
+            {
+                var existingBook = _bookService.GetBookById(id);
+
+                if (existingBook == null)
+                {
+                    _logger?.Warn($"Book with ID {id} not found.");
+                    return NotFound("Book not found");
+                }
+
+                existingBook.Title = updatedBook.Title;
+                existingBook.Author = updatedBook.Author;
+                existingBook.Genre = updatedBook.Genre;
+                existingBook.ISBN = updatedBook.ISBN;
+                existingBook.PublishDate = updatedBook.PublishDate;
+
+                _bookService.UpdateBook(existingBook);
+
+                _logger?.Info($"Book updated successfully. Book ID: {id}");
+                return Ok(existingBook);
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error($"Error in UpdateBook: {ex.Message}");
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
             }
         }
 
@@ -102,6 +132,38 @@ namespace Practice.Controllers
             return StatusCode(200);
         }
 
-       
+        [HttpGet("search/author/{author}")]
+        public ActionResult<IEnumerable<BookDto>> SearchBooksByAuthor(string author)
+        {
+            try
+            {
+                var booksByAuthor = _bookService.SearchBooksByAuthor(author);
+                var bookDTOs = _mapper.Map<List<BookDto>>(booksByAuthor);
+                _logger?.Info($"Retrieved books by author successfully. Author: {author}");
+                return StatusCode(200, bookDTOs);
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error($"Error in SearchBooksByAuthor: {ex.Message}");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("search/genre/{genre}")]
+        public ActionResult<IEnumerable<BookDto>> SearchBooksByGenre(string genre)
+        {
+            try
+            {
+                var booksByGenre = _bookService.SearchBooksByGenre(genre);
+                var bookDTOs = _mapper.Map<List<BookDto>>(booksByGenre);
+                _logger?.Info($"Retrieved books by genre successfully. Genre: {genre}");
+                return StatusCode(200, bookDTOs);
+            }
+            catch (Exception ex)
+            {
+                _logger?.Error($"Error in SearchBooksByGenre: {ex.Message}");
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }

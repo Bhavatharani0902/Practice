@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Practice.DTOs;
-using Practice.Entities;
+using Practice.Entities; 
 using Practice.Service;
 using System;
 using log4net;
@@ -12,7 +12,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace Practice.Controllers
+namespace Practice.Controllers 
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -30,6 +30,47 @@ namespace Practice.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration;
         }
+
+        [HttpGet("GetAllUsers")]
+        //[Authorize(Roles = "Admin")]
+        public IActionResult GetAllUsers()
+        {
+            try
+            {
+                List<User> users = _userService.GetAllUsers();
+                List<UserDTO> usersDto = _mapper.Map<List<UserDTO>>(users);
+                _logger.Info("Retrieved all users successfully.");
+                return Ok(usersDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Error getting all users: {ex.Message}");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        //[HttpGet("{userId}")]
+        ////[Authorize(Roles = "Admin, User")]
+        //public ActionResult<UserDTO> GetUserById(int userId)
+        //{
+        //    try
+        //    {
+        //        var user = _userService.GetUserById(userId);
+
+        //        if (user == null)
+        //        {
+        //            return NotFound();
+        //        }
+
+        //        var userDTO = _mapper.Map<UserDTO>(user);
+        //        return Ok(userDTO);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, $"Internal Server Error: {ex.Message}");
+        //    }
+        //}
+
         [HttpPost("Register")]
         [AllowAnonymous]
         public IActionResult AddUser(UserDTO userDto)
@@ -48,6 +89,41 @@ namespace Practice.Controllers
             }
         }
 
+        //[HttpPut("EditUser")]
+        ////[Authorize(Roles = "Admin, User")]
+        //public IActionResult EditUser(UserDTO userDto)
+        //{
+        //    try
+        //    {
+        //        User user = _mapper.Map<User>(userDto);
+        //        _userService.EditUser(user);
+        //        _logger.Info($"User updated successfully. User ID: {user.UserId}");
+        //        return Ok(user);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.Error($"Error updating user: {ex.Message}");
+        //        return StatusCode(500, ex.Message);
+        //    }
+        //}
+
+        //[HttpDelete, Route("DeleteUser/{id}")]
+        ////[Authorize(Roles = "Admin")]
+        //public IActionResult DeleteUser(int id)
+        //{
+        //    try
+        //    {
+        //        _userService.DeleteUser(id);
+        //        _logger.Info($"User deleted successfully. User ID: {id}");
+        //        return StatusCode(200);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.Error($"Error deleting user: {ex.Message}");
+        //        return StatusCode(500, ex.Message);
+        //    }
+        //}
+
         [HttpPost("Validate")]
         [AllowAnonymous]
         public IActionResult Validate(Login login)
@@ -59,7 +135,7 @@ namespace Practice.Controllers
                 if (user != null)
                 {
                     authResponse.UserID = user.UserId;
-                    authResponse.UserName = user.Username;
+                    authResponse.UserName = user.Username; // Update property name
                     authResponse.Role = user.Role;
                     authResponse.Token = GenerateToken(user);
                 }
@@ -86,7 +162,7 @@ namespace Practice.Controllers
 
             var claims = new List<Claim>
             {
-                
+                new Claim(ClaimTypes.Name, user.Username), // Update property name
                 new Claim(ClaimTypes.Role, user.Role),
                 new Claim(ClaimTypes.Email, user.Email),
             };
@@ -108,6 +184,4 @@ namespace Practice.Controllers
             return tokenHandler.WriteToken(token);
         }
     }
-
 }
-

@@ -2,6 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Practice.Databases;
 using Practice.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Practice.Service
 {
@@ -13,6 +16,7 @@ namespace Practice.Service
         {
             _dbContext = dbContext;
         }
+
         public void AddBook(Book book)
         {
             _dbContext.Books.Add(book);
@@ -38,25 +42,43 @@ namespace Practice.Service
         public Book GetBookById(int id)
         {
             return _dbContext.Books.Find(id);
-
         }
 
-        public void UpdateBook(int id, Book updatedBook)
+        public List<Book> SearchBooksByAuthor(string author)
         {
-            var existingBook = _dbContext.Books.Find(id);
+            return _dbContext.Books
+                .Where(book => book.Author.Contains(author))
+                .ToList();
+        }
 
-            if (existingBook != null)
+        public List<Book> SearchBooksByGenre(string genre)
+        {
+            return _dbContext.Books
+                .Where(book => book.Genre.Contains(genre))
+                .ToList();
+        }
+
+        public void UpdateBook(Book existingBook)
+        {
+            if (existingBook == null)
             {
-                existingBook.Title = updatedBook.Title;
-                existingBook.Author = updatedBook.Author;
-                existingBook.Genre = updatedBook.Genre;
-                existingBook.ISBN = updatedBook.ISBN;
-                existingBook.PublishDate = updatedBook.PublishDate;
+                throw new ArgumentNullException(nameof(existingBook));
+            }
 
+            var bookInDb = _dbContext.Books.Find(existingBook.BookId);
+
+            if (bookInDb != null)
+            {
+                // Update properties of the existing book
+                bookInDb.Title = existingBook.Title;
+                bookInDb.Author = existingBook.Author;
+                bookInDb.Genre = existingBook.Genre;
+                bookInDb.ISBN = existingBook.ISBN;
+                bookInDb.PublishDate = existingBook.PublishDate;
+
+                // Save changes to the database
                 _dbContext.SaveChanges();
             }
         }
     }
 }
-
-
